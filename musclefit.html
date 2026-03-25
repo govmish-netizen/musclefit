@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MuscleFit — Gym Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: #2a2a2a;
+    --accent: #e8ff3b;
+    --accent2: #ff5c3b;
+    --text: #f0f0f0;
+    --muted: #888;
+    --green: #3bff8a;
+    --red: #ff3b3b;
+    --orange: #ffaa3b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  /* LOGIN */
+  #login-screen {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+    background: radial-gradient(ellipse at 60% 0%, #1a1f00 0%, #0d0d0d 60%);
+  }
+  .login-logo { font-family: 'Bebas Neue', sans-serif; font-size: 56px; letter-spacing: 4px; color: var(--accent); line-height: 1; }
+  .login-sub { color: var(--muted); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 40px; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 100%; max-width: 360px; }
+  .login-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; margin-bottom: 24px; color: var(--accent); }
+  .role-btn { width: 100%; padding: 14px 20px; margin-bottom: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px; transition: all .2s; }
+  .role-btn:hover { border-color: var(--accent); background: #1c1f0a; }
+  .role-btn .icon { font-size: 20px; }
+  .pin-section { margin-top: 16px; display: none; flex-direction: column; gap: 10px; }
+  .pin-section.visible { display: flex; }
+  .pin-input { width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 18px; letter-spacing: 8px; text-align: center; font-family: 'DM Sans', sans-serif; }
+  .pin-input:focus { outline: none; border-color: var(--accent); }
+  .btn-primary { width: 100%; padding: 14px; background: var(--accent); color: #0d0d0d; border: none; border-radius: 8px; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; cursor: pointer; transition: opacity .2s; }
+  .btn-primary:hover { opacity: .85; }
+  .error-msg { color: var(--red); font-size: 13px; text-align: center; display: none; }
+  .error-msg.visible { display: block; }
+
+  /* APP */
+  #app { display: none; min-height: 100vh; flex-direction: column; }
+  #app.visible { display: flex; }
+
+  /* TOPBAR */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .topbar-logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px; color: var(--accent); }
+  .branch-tag { background: var(--accent); color: #0d0d0d; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+  .branch-tag.owner { background: var(--accent2); color: #fff; }
+  .logout-btn { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+  .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* TABS */
+  .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tab { flex: 1; padding: 14px 8px; text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .2s; min-width: 80px; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* CONTENT */
+  .content { flex: 1; padding: 20px; max-width: 700px; margin: 0 auto; width: 100%; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--accent); margin-bottom: 16px; }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-box { background: var(--surface2); border-radius: 10px; padding: 14px 10px; text-align: center; border: 1px solid var(--border); }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  /* FORM */
+  .form-grid { display: flex; flex-direction: column; gap: 12px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  label { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 5px; }
+  input, select { width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  select option { background: var(--bg); }
+  .photo-preview { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden; }
+  .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .btn-sm { padding: 8px 16px; background: var(--accent); color: #0d0d0d; border: none; border-radius: 6px; font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; cursor: pointer; }
+  .btn-sm.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+
+  /* MEMBER LIST */
+  .member-item { background: var(--surface2); border-radius: 10px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; border-left: 3px solid transparent; }
+  .member-item.due-soon { border-left-color: var(--orange); }
+  .member-item.overdue { border-left-color: var(--red); }
+  .member-item.active { border-left-color: var(--green); }
+  .member-item.left { border-left-color: var(--muted); opacity: .6; }
+  .member-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; overflow: hidden; }
+  .member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .member-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .member-due { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .due-green { color: var(--green); }
+  .due-orange { color: var(--orange); }
+  .due-red { color: var(--red); }
+  .due-grey { color: var(--muted); }
+  .member-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .icon-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; cursor: pointer; font-size: 14px; color: var(--text); }
+  .icon-btn:hover { border-color: var(--accent); }
+
+  /* BADGE */
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; }
+  .badge-green { background: #0d2a1a; color: var(--green); }
+  .badge-orange { background: #2a1a00; color: var(--orange); }
+  .badge-red { background: #2a0d0d; color: var(--red); }
+  .badge-grey { background: var(--surface); color: var(--muted); }
+
+  /* SUMMARY */
+  .summary-branch { margin-bottom: 20px; }
+  .summary-branch-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--accent2); margin-bottom: 10px; }
+  .alert-item { background: var(--surface2); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--orange); }
+  .alert-item.overdue { border-left-color: var(--red); }
+
+  /* SEARCH */
+  .search-box { width: 100%; padding: 10px 14px 10px 36px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; margin-bottom: 14px; }
+  .search-wrap { position: relative; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; display: none; align-items: flex-end; justify-content: center; padding: 0; }
+  .modal-overlay.visible { display: flex; }
+  .modal { background: var(--surface); border-radius: 16px 16px 0 0; width: 100%; max-width: 500px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--accent); margin-bottom: 20px; display: flex; justify-content: space-between; }
+  .close-btn { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
+
+  /* FILTER ROW */
+  .filter-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+  .filter-btn.active { background: var(--accent); color: #0d0d0d; border-color: var(--accent); }
+
+  .empty-state { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 14px; }
+  .empty-state .e-icon { font-size: 40px; margin-bottom: 8px; }
+
+  @media (max-width: 400px) { .form-row { grid-template-columns: 1fr; } .stats-row { grid-template-columns: repeat(3,1fr); } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-logo">MuscleFit</div>
+  <div class="login-sub">Gym Management System</div>
+  <div class="login-card">
+    <h2>Select Your Branch</h2>
+    <button class="role-btn" onclick="selectRole('bharwara')"><span class="icon">🏋️</span> Bharwara Branch</button>
+    <button class="role-btn" onclick="selectRole('chinhat')"><span class="icon">🏋️</span> Chinhat Branch</button>
+    <button class="role-btn" onclick="selectRole('owner')"><span class="icon">👑</span> Owner (Delhi)</button>
+    <div class="pin-section" id="pin-section">
+      <input class="pin-input" type="password" id="pin-input" maxlength="4" placeholder="····" inputmode="numeric">
+      <button class="btn-primary" onclick="doLogin()">ENTER</button>
+      <div class="error-msg" id="error-msg">Wrong PIN. Try again.</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">MuscleFit</div>
+      <div class="branch-tag" id="branch-tag"></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="content" id="main-content"></div>
+</div>
+
+<!-- ADD/EDIT MEMBER MODAL -->
+<div class="modal-overlay" id="member-modal">
+  <div class="modal">
+    <div class="modal-title"><span id="modal-title-text">Add Member</span><button class="close-btn" onclick="closeModal()">✕</button></div>
+    <div class="form-grid">
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div class="photo-preview" id="photo-preview">📷</div>
+        <div>
+          <label>Photo</label>
+          <input type="file" accept="image/*" id="photo-input" style="font-size:12px;padding:6px;" onchange="previewPhoto(event)">
+        </div>
+      </div>
+      <div><label>Full Name *</label><input type="text" id="f-name" placeholder="e.g. Rahul Sharma"></div>
+      <div><label>Phone Number *</label><input type="tel" id="f-phone" placeholder="10-digit number"></div>
+      <div class="form-row">
+        <div><label>Join Date *</label><input type="date" id="f-join"></div>
+        <div><label>Plan *</label>
+          <select id="f-plan">
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly (3 months)</option>
+          </select>
+        </div>
+      </div>
+      <div><label>Fee Paid (₹) *</label><input type="number" id="f-fee" placeholder="e.g. 1200"></div>
+      <div><label>Fee Paid Date *</label><input type="date" id="f-feedate"></div>
+      <div><label>Status</label>
+        <select id="f-status">
+          <option value="active">Active</option>
+          <option value="left">Left / Inactive</option>
+        </select>
+      </div>
+      <div><label>Notes</label><input type="text" id="f-notes" placeholder="Any notes..."></div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn-primary" style="flex:1;" onclick="saveMember()">SAVE</button>
+        <button class="btn-sm secondary" style="padding:14px 20px;" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────
+const PINS = { bharwara: '1111', chinhat: '2222', owner: '9999' };
+const BRANCH_NAMES = { bharwara: 'Bharwara', chinhat: 'Chinhat', owner: 'Owner' };
+
+let currentRole = null;
+let selectedRole = null;
+let editingId = null;
+let photoData = null;
+let currentFilter = 'all';
+let currentSearch = '';
+
+function loadData() {
+  return JSON.parse(localStorage.getItem('musclefit_data') || '{"bharwara":[],"chinhat":[]}');
+}
+function saveData(d) { localStorage.setItem('musclefit_data', JSON.stringify(d)); }
+function getData(branch) { return loadData()[branch] || []; }
+function setData(branch, arr) { const d = loadData(); d[branch] = arr; saveData(d); }
+
+// ─── AUTH ────────────────────────────────────────────────────────────
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('pin-section').classList.add('visible');
+  document.getElementById('pin-input').value = '';
+  document.getElementById('error-msg').classList.remove('visible');
+  document.getElementById('pin-input').focus();
+}
+function doLogin() {
+  const pin = document.getElementById('pin-input').value;
+  if (pin === PINS[selectedRole]) {
+    currentRole = selectedRole;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    const tag = document.getElementById('branch-tag');
+    tag.textContent = BRANCH_NAMES[selectedRole] + (selectedRole === 'owner' ? '' : ' Branch');
+    if (selectedRole === 'owner') tag.classList.add('owner');
+    renderTabs();
+    renderTab('dashboard');
+  } else {
+    document.getElementById('error-msg').classList.add('visible');
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && selectedRole) doLogin(); });
+function logout() {
+  currentRole = null; selectedRole = null;
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pin-section').classList.remove('visible');
+  document.getElementById('branch-tag').classList.remove('owner');
+}
+
+// ─── TABS ────────────────────────────────────────────────────────────
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  const items = currentRole === 'owner'
+    ? [['dashboard','📊 Overview'], ['bharwara','🏋 Bharwara'], ['chinhat','🏋 Chinhat']]
+    : [['dashboard','📊 Dashboard'], ['members','👥 Members'], ['add','➕ Add']];
+  tabs.innerHTML = items.map(([id, label]) =>
+    `<div class="tab" id="tab-${id}" onclick="renderTab('${id}')">${label}</div>`).join('');
+  document.getElementById('tab-dashboard').classList.add('active');
+}
+function setActiveTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById('tab-' + id);
+  if (el) el.classList.add('active');
+}
+
+function renderTab(id) {
+  setActiveTab(id);
+  currentFilter = 'all'; currentSearch = '';
+  if (currentRole === 'owner') {
+    if (id === 'dashboard') renderOwnerDashboard();
+    else renderOwnerBranch(id);
+  } else {
+    if (id === 'dashboard') renderBranchDashboard();
+    else if (id === 'members') renderMembers();
+    else if (id === 'add') renderAddForm();
+  }
+}
+
+// ─── DATE HELPERS ───────────────────────────────────────────────────
+function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
+function addMonths(date, m) { const d = new Date(date); d.setMonth(d.getMonth() + m); return d; }
+function nextDue(feeDate, plan) {
+  const d = new Date(feeDate);
+  return plan === 'quarterly' ? addMonths(d, 3) : addMonths(d, 1);
+}
+function daysUntil(date) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(date); d.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+}
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+}
+function dueStatus(member) {
+  if (member.status === 'left') return { label: 'Inactive', cls: 'due-grey', badge: 'badge-grey', days: null };
+  const due = nextDue(member.feeDate, member.plan);
+  const diff = daysUntil(due);
+  if (diff < 0) return { label: `Overdue by ${Math.abs(diff)} day${Math.abs(diff)>1?'s':''}`, cls:'due-red', badge:'badge-red', days: diff };
+  if (diff === 0) return { label: 'Due Today!', cls:'due-red', badge:'badge-red', days: diff };
+  if (diff <= 3) return { label: `Due in ${diff} day${diff>1?'s':''}`, cls:'due-orange', badge:'badge-orange', days: diff };
+  return { label: `Due ${fmtDate(due)}`, cls:'due-green', badge:'badge-green', days: diff };
+}
+
+// ─── BRANCH DASHBOARD ───────────────────────────────────────────────
+function renderBranchDashboard() {
+  const members = getData(currentRole);
+  const active = members.filter(m => m.status === 'active');
+  const overdue = active.filter(m => daysUntil(nextDue(m.feeDate, m.plan)) < 0);
+  const dueSoon = active.filter(m => { const d = daysUntil(nextDue(m.feeDate, m.plan)); return d >= 0 && d <= 3; });
+  const today = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('main-content').innerHTML = `
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${today}</div>
+      <div class="card-title">Today's Summary</div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num">${active.length}</div><div class="stat-label">Active</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--orange)">${dueSoon.length}</div><div class="stat-label">Due Soon</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--red)">${overdue.length}</div><div class="stat-label">Overdue</div></div>
+      </div>
+    </div>
+    ${overdue.length || dueSoon.length ? `
+    <div class="card">
+      <div class="card-title">⚠️ Needs Attention</div>
+      ${[...overdue, ...dueSoon].map(m => {
+        const ds = dueStatus(m);
+        return `<div class="alert-item ${ds.days < 0 ? 'overdue' : ''}">
+          <div>
+            <div style="font-weight:600">${m.name}</div>
+            <div style="font-size:12px;color:var(--muted)">${m.phone} · ${m.plan}</div>
+          </div>
+          <div class="${ds.cls}" style="font-size:12px;font-weight:700;text-align:right">${ds.label}</div>
+        </div>`;
+      }).join('')}
+    </div>` : `<div class="card"><div class="empty-state"><div class="e-icon">✅</div>All fees up to date!</div></div>`}
+  `;
+}
+
+// ─── MEMBERS LIST ────────────────────────────────────────────────────
+function renderMembers(filter, search) {
+  if (filter !== undefined) currentFilter = filter;
+  if (search !== undefined) currentSearch = search;
+  const all = getData(currentRole);
+  let members = [...all];
+  if (currentFilter === 'active') members = members.filter(m => m.status === 'active');
+  if (currentFilter === 'left') members = members.filter(m => m.status === 'left');
+  if (currentFilter === 'due') members = members.filter(m => m.status === 'active' && daysUntil(nextDue(m.feeDate, m.plan)) <= 3);
+  if (currentFilter === 'overdue') members = members.filter(m => m.status === 'active' && daysUntil(nextDue(m.feeDate, m.plan)) < 0);
+  if (currentSearch) members = members.filter(m => m.name.toLowerCase().includes(currentSearch.toLowerCase()) || m.phone.includes(currentSearch));
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-box" placeholder="Search name or phone..." value="${currentSearch}" oninput="renderMembers(undefined, this.value)"></div>
+    <div class="filter-row">
+      ${[['all','All'],['active','Active'],['due','Due Soon'],['overdue','Overdue'],['left','Left']].map(([v,l]) =>
+        `<button class="filter-btn ${currentFilter===v?'active':''}" onclick="renderMembers('${v}')">${l}</button>`).join('')}
+    </div>
+    ${members.length === 0 ? `<div class="empty-state"><div class="e-icon">👥</div>No members found.</div>` :
+      members.map(m => memberCard(m)).join('')}
+  `;
+}
+
+function memberCard(m) {
+  const ds = dueStatus(m);
+  const due = nextDue(m.feeDate, m.plan);
+  return `<div class="member-item ${m.status === 'left' ? 'left' : ds.days !== null && ds.days < 0 ? 'overdue' : ds.days !== null && ds.days <= 3 ? 'due-soon' : 'active'}">
+    <div class="member-avatar">${m.photo ? `<img src="${m.photo}">` : '👤'}</div>
+    <div class="member-info">
+      <div class="member-name">${m.name} <span class="badge ${ds.badge}">${m.status === 'left' ? 'Left' : ds.days < 0 ? 'Overdue' : ds.days <= 3 ? 'Due Soon' : 'Active'}</span></div>
+      <div class="member-meta">📞 ${m.phone} · ${m.plan === 'monthly' ? 'Monthly' : 'Quarterly'} · ₹${m.fee}</div>
+      <div class="member-due ${ds.cls}">🗓 ${ds.label}</div>
+      ${m.notes ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">📝 ${m.notes}</div>` : ''}
+    </div>
+    <div class="member-actions">
+      <button class="icon-btn" onclick="openEditModal('${m.id}', '${currentRole}')" title="Edit">✏️</button>
+      <button class="icon-btn" onclick="renewMember('${m.id}')" title="Renew Fee" style="color:var(--green);">💰</button>
+    </div>
+  </div>`;
+}
+
+// ─── ADD FORM ────────────────────────────────────────────────────────
+function renderAddForm() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="card">
+      <div class="card-title">Add New Member</div>
+      <div class="form-grid">
+        <div style="display:flex;gap:14px;align-items:center;">
+          <div class="photo-preview" id="photo-preview-inline">📷</div>
+          <div><label>Photo</label><input type="file" accept="image/*" style="font-size:12px;padding:6px;" onchange="previewPhotoInline(event)"></div>
+        </div>
+        <div><label>Full Name *</label><input type="text" id="i-name" placeholder="e.g. Rahul Sharma"></div>
+        <div><label>Phone Number *</label><input type="tel" id="i-phone" placeholder="10-digit"></div>
+        <div class="form-row">
+          <div><label>Join Date *</label><input type="date" id="i-join" value="${new Date().toISOString().split('T')[0]}"></div>
+          <div><label>Plan *</label><select id="i-plan"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option></select></div>
+        </div>
+        <div><label>Fee Paid (₹) *</label><input type="number" id="i-fee" placeholder="e.g. 1200"></div>
+        <div><label>Fee Paid Date *</label><input type="date" id="i-feedate" value="${new Date().toISOString().split('T')[0]}"></div>
+        <div><label>Notes</label><input type="text" id="i-notes" placeholder="Any notes..."></div>
+        <button class="btn-primary" onclick="addMemberInline()">ADD MEMBER</button>
+        <div id="add-success" style="color:var(--green);text-align:center;display:none;font-weight:600;">✅ Member added!</div>
+      </div>
+    </div>`;
+  photoData = null;
+}
+
+function previewPhotoInline(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    photoData = ev.target.result;
+    const el = document.getElementById('photo-preview-inline');
+    if (el) el.innerHTML = `<img src="${photoData}">`;
+  };
+  r.readAsDataURL(file);
+}
+
+function addMemberInline() {
+  const name = document.getElementById('i-name').value.trim();
+  const phone = document.getElementById('i-phone').value.trim();
+  const join = document.getElementById('i-join').value;
+  const plan = document.getElementById('i-plan').value;
+  const fee = document.getElementById('i-fee').value;
+  const feeDate = document.getElementById('i-feedate').value;
+  const notes = document.getElementById('i-notes').value.trim();
+  if (!name || !phone || !join || !fee || !feeDate) { alert('Please fill all required fields.'); return; }
+  const members = getData(currentRole);
+  members.push({ id: Date.now().toString(), name, phone, joinDate: join, plan, fee, feeDate, notes, status: 'active', photo: photoData || null });
+  setData(currentRole, members);
+  document.getElementById('add-success').style.display = 'block';
+  setTimeout(() => { renderTab('members'); }, 900);
+}
+
+// ─── MODAL EDIT ──────────────────────────────────────────────────────
+function openEditModal(id, branch) {
+  const members = getData(branch || currentRole);
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  editingId = id; photoData = m.photo || null;
+  document.getElementById('modal-title-text').textContent = 'Edit Member';
+  document.getElementById('f-name').value = m.name;
+  document.getElementById('f-phone').value = m.phone;
+  document.getElementById('f-join').value = m.joinDate;
+  document.getElementById('f-plan').value = m.plan;
+  document.getElementById('f-fee').value = m.fee;
+  document.getElementById('f-feedate').value = m.feeDate;
+  document.getElementById('f-status').value = m.status;
+  document.getElementById('f-notes').value = m.notes || '';
+  const pp = document.getElementById('photo-preview');
+  pp.innerHTML = m.photo ? `<img src="${m.photo}">` : '📷';
+  document.getElementById('member-modal').classList.add('visible');
+}
+function previewPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    photoData = ev.target.result;
+    document.getElementById('photo-preview').innerHTML = `<img src="${photoData}">`;
+  };
+  r.readAsDataURL(file);
+}
+function saveMember() {
+  if (!editingId) return;
+  const branch = currentRole === 'owner' ? null : currentRole;
+  if (!branch) return;
+  const members = getData(branch);
+  const idx = members.findIndex(x => x.id === editingId);
+  if (idx === -1) return;
+  members[idx] = { ...members[idx],
+    name: document.getElementById('f-name').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    joinDate: document.getElementById('f-join').value,
+    plan: document.getElementById('f-plan').value,
+    fee: document.getElementById('f-fee').value,
+    feeDate: document.getElementById('f-feedate').value,
+    status: document.getElementById('f-status').value,
+    notes: document.getElementById('f-notes').value.trim(),
+    photo: photoData
+  };
+  setData(branch, members);
+  closeModal();
+  renderMembers();
+}
+function closeModal() {
+  document.getElementById('member-modal').classList.remove('visible');
+  editingId = null; photoData = null;
+}
+
+function renewMember(id) {
+  const members = getData(currentRole);
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  const today = new Date().toISOString().split('T')[0];
+  const newFee = prompt(`Renew fee for ${m.name}\nEnter fee amount (₹):`, m.fee);
+  if (!newFee) return;
+  m.fee = newFee; m.feeDate = today; m.status = 'active';
+  setData(currentRole, members);
+  renderMembers();
+}
+
+// ─── OWNER VIEWS ─────────────────────────────────────────────────────
+function renderOwnerDashboard() {
+  const branches = ['bharwara', 'chinhat'];
+  let html = '';
+  branches.forEach(b => {
+    const members = getData(b);
+    const active = members.filter(m => m.status === 'active');
+    const overdue = active.filter(m => daysUntil(nextDue(m.feeDate, m.plan)) < 0);
+    const dueSoon = active.filter(m => { const d = daysUntil(nextDue(m.feeDate, m.plan)); return d >= 0 && d <= 3; });
+    const alerts = [...overdue, ...dueSoon];
+    html += `<div class="summary-branch">
+      <div class="summary-branch-title">🏋 ${BRANCH_NAMES[b]} Branch</div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num">${active.length}</div><div class="stat-label">Active</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--orange)">${dueSoon.length}</div><div class="stat-label">Due Soon</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--red)">${overdue.length}</div><div class="stat-label">Overdue</div></div>
+      </div>
+      ${alerts.length ? alerts.map(m => {
+        const ds = dueStatus(m);
+        return `<div class="alert-item ${ds.days < 0 ? 'overdue' : ''}">
+          <div><div style="font-weight:600">${m.name}</div><div style="font-size:12px;color:var(--muted)">📞 ${m.phone}</div></div>
+          <div class="${ds.cls}" style="font-size:12px;font-weight:700;text-align:right">${ds.label}</div>
+        </div>`;
+      }).join('') : `<div style="color:var(--green);font-size:13px;padding:8px 0;">✅ All fees current</div>`}
+    </div>`;
+  });
+  document.getElementById('main-content').innerHTML = `<div class="card"><div class="card-title">📊 All Branches Overview</div>${html}</div>`;
+}
+
+function renderOwnerBranch(branch) {
+  currentFilter = currentFilter || 'all';
+  const all = getData(branch);
+  let members = [...all];
+  if (currentFilter === 'active') members = members.filter(m => m.status === 'active');
+  if (currentFilter === 'left') members = members.filter(m => m.status === 'left');
+  if (currentFilter === 'due') members = members.filter(m => m.status === 'active' && daysUntil(nextDue(m.feeDate, m.plan)) <= 3);
+  if (currentFilter === 'overdue') members = members.filter(m => m.status === 'active' && daysUntil(nextDue(m.feeDate, m.plan)) < 0);
+  if (currentSearch) members = members.filter(m => m.name.toLowerCase().includes(currentSearch.toLowerCase()) || m.phone.includes(currentSearch));
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-box" placeholder="Search name or phone..." value="${currentSearch}" oninput="ownerSearch('${branch}', this.value)"></div>
+    <div class="filter-row">
+      ${[['all','All'],['active','Active'],['due','Due Soon'],['overdue','Overdue'],['left','Left']].map(([v,l]) =>
+        `<button class="filter-btn ${currentFilter===v?'active':''}" onclick="ownerFilter('${branch}','${v}')">${l}</button>`).join('')}
+    </div>
+    ${members.length === 0 ? `<div class="empty-state"><div class="e-icon">👥</div>No members found.</div>` :
+      members.map(m => ownerMemberCard(m)).join('')}
+  `;
+}
+function ownerFilter(branch, f) { currentFilter = f; renderOwnerBranch(branch); }
+function ownerSearch(branch, s) { currentSearch = s; renderOwnerBranch(branch); }
+
+function ownerMemberCard(m) {
+  const ds = dueStatus(m);
+  return `<div class="member-item ${m.status === 'left' ? 'left' : ds.days !== null && ds.days < 0 ? 'overdue' : ds.days !== null && ds.days <= 3 ? 'due-soon' : 'active'}">
+    <div class="member-avatar">${m.photo ? `<img src="${m.photo}">` : '👤'}</div>
+    <div class="member-info">
+      <div class="member-name">${m.name} <span class="badge ${ds.badge}">${m.status === 'left' ? 'Left' : ds.days < 0 ? 'Overdue' : ds.days <= 3 ? 'Due Soon' : 'Active'}</span></div>
+      <div class="member-meta">📞 <a href="tel:${m.phone}" style="color:var(--accent);text-decoration:none;">${m.phone}</a> · ${m.plan === 'monthly' ? 'Monthly' : 'Quarterly'} · ₹${m.fee}</div>
+      <div class="member-due ${ds.cls}">🗓 ${ds.label}</div>
+    </div>
+    <a href="tel:${m.phone}" style="text-decoration:none;"><button class="icon-btn" title="Call">📞</button></a>
+  </div>`;
+}
+
+// Init sample data if empty
+(function() {
+  const d = loadData();
+  if (!d.bharwara.length && !d.chinhat.length) {
+    const today = new Date();
+    const fmt = d => d.toISOString().split('T')[0];
+    const daysAgo = n => { const x = new Date(); x.setDate(x.getDate() - n); return fmt(x); };
+    d.bharwara = [
+      { id: '1', name: 'Amit Kumar', phone: '9876543210', joinDate: daysAgo(45), plan: 'monthly', fee: '1200', feeDate: daysAgo(32), notes: '', status: 'active', photo: null },
+      { id: '2', name: 'Priya Singh', phone: '9812345678', joinDate: daysAgo(90), plan: 'quarterly', fee: '3000', feeDate: daysAgo(2), notes: 'Evening batch', status: 'active', photo: null },
+      { id: '3', name: 'Ravi Verma', phone: '9765432109', joinDate: daysAgo(120), plan: 'monthly', fee: '1200', feeDate: daysAgo(35), notes: '', status: 'left', photo: null },
+    ];
+    d.chinhat = [
+      { id: '4', name: 'Sneha Gupta', phone: '9988776655', joinDate: daysAgo(20), plan: 'monthly', fee: '1000', feeDate: daysAgo(1), notes: '', status: 'active', photo: null },
+      { id: '5', name: 'Mohit Yadav', phone: '9900112233', joinDate: daysAgo(65), plan: 'quarterly', fee: '2700', feeDate: daysAgo(80), notes: '', status: 'active', photo: null },
+    ];
+    saveData(d);
+  }
+})();
+</script>
+</body>
+</html>
